@@ -1,6 +1,106 @@
 import { useState } from 'react'
 import { Star, MessageSquare, Flame, Award, Heart, Plus } from 'lucide-react'
 
+// Sub-component to manage its own input form state and avoid React Hook Rule violations (useState inside loop)
+function GanteleReviewCard({ video, onVideoClick, localReviews, onAddReview }) {
+  const [inputText, setInputText] = useState('')
+  const [inputRating, setInputRating] = useState(5)
+  
+  const customReview = localReviews[video.id] || {
+    rating: video.rating,
+    review: video.review
+  }
+  const displayRating = customReview.rating
+  const displayReview = customReview.review
+
+  const handleSubmit = () => {
+    if (!inputText.trim()) return
+    onAddReview(video.id, inputRating, inputText)
+    setInputText('')
+  }
+
+  return (
+    <div className="bg-[#181a2e] border border-violet-950/40 rounded-xl p-4 flex flex-col gap-3 transition-all hover:border-violet-600/30">
+      {/* Video Reference */}
+      <div
+        onClick={() => onVideoClick(video)}
+        className="flex gap-3 cursor-pointer group"
+      >
+        <div className="w-14 aspect-video rounded-lg overflow-hidden flex-shrink-0 bg-black">
+          <img src={video.aniThumbnailUrl} alt="" className="w-full h-full object-cover" />
+        </div>
+        <div className="flex flex-col">
+          <span className="text-[11px] font-bold text-white line-clamp-1 group-hover:text-violet-400 transition-colors">
+            {video.videoTitle}
+          </span>
+          <span className="text-[9px] text-slate-500">{video.playlist}</span>
+        </div>
+      </div>
+
+      {/* Active Review View */}
+      <div className="bg-[#101121] rounded-lg p-2.5 flex flex-col gap-1 text-xs">
+        <div className="flex justify-between items-center">
+          <div className="flex text-yellow-400 gap-0.5">
+            {Array.from({ length: 5 }).map((_, idx) => (
+              <Star
+                key={idx}
+                size={11}
+                fill={idx < displayRating ? "currentColor" : "none"}
+                className="text-yellow-400"
+              />
+            ))}
+          </div>
+          <span className="text-[10px] text-slate-500">
+            평점: {displayRating > 0 ? `${displayRating.toFixed(1)} / 5` : '리뷰 없음'}
+          </span>
+        </div>
+        <p className={`mt-1 text-[11px] leading-relaxed italic ${displayRating > 0 ? 'text-zinc-200' : 'text-slate-600'}`}>
+          "{displayReview}"
+        </p>
+      </div>
+
+      {/* Rating / Write Review form */}
+      <div className="flex flex-col gap-2 pt-2 border-t border-slate-900">
+        <div className="flex justify-between items-center">
+          <span className="text-[10px] text-slate-400">내 평가 입력:</span>
+          <div className="flex gap-0.5">
+            {[1, 2, 3, 4, 5].map((star) => (
+              <button
+                key={star}
+                type="button"
+                onClick={() => setInputRating(star)}
+                className="text-yellow-400 focus:outline-none cursor-pointer"
+              >
+                <Star size={12} fill={star <= inputRating ? "currentColor" : "none"} />
+              </button>
+            ))}
+          </div>
+        </div>
+        
+        <div className="flex bg-[#101121] rounded-lg overflow-hidden border border-slate-900 focus-within:border-violet-600">
+          <input
+            type="text"
+            placeholder="재치있는 드립 평 작성..."
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === 'Enter') handleSubmit()
+            }}
+            className="flex-1 px-3 py-1.5 bg-transparent border-none text-[11px] text-white focus:outline-none placeholder-slate-600"
+          />
+          <button
+            type="button"
+            onClick={handleSubmit}
+            className="px-3 bg-violet-600 hover:bg-violet-500 text-white font-bold text-[10px] flex items-center justify-center cursor-pointer transition-colors"
+          >
+            등록
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 export default function Gantele({ videos, onVideoClick }) {
   const [selectedGenre, setSelectedGenre] = useState('전체')
   const [localReviews, setLocalReviews] = useState({}) // Stores user-submitted mock reviews
@@ -17,7 +117,6 @@ export default function Gantele({ videos, onVideoClick }) {
 
   // Handle local review submission (interactive parody feature!)
   const handleAddReview = (videoId, ratingValue, text) => {
-    if (!text.trim()) return
     setLocalReviews(prev => ({
       ...prev,
       [videoId]: {
@@ -79,13 +178,12 @@ export default function Gantele({ videos, onVideoClick }) {
 
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 gap-x-4 gap-y-8">
             {filteredVideos.map(video => {
-              // Retrieve review data: check local reviews state first, fallback to DB video details
+              // Retrieve review data
               const customReview = localReviews[video.id] || {
                 rating: video.rating,
                 review: video.review
               }
               const displayRating = customReview.rating > 0 ? customReview.rating.toFixed(1) : "평가 없음"
-              const displayReview = customReview.review
 
               // Regular YouTube high-quality thumbnail URL for crossfade hover fallback
               const ytThumbnail = `https://img.youtube.com/vi/${video.youtubeVideoId}/hqdefault.jpg`
@@ -99,7 +197,7 @@ export default function Gantele({ videos, onVideoClick }) {
                   {/* Poster Thumbnail (Anime Cross-fade hover styling!) */}
                   <div className="relative aspect-[3/4] w-full rounded-xl overflow-hidden bg-[#181a2e] border border-violet-950/20 shadow-md">
                     
-                    {/* Layer 1 (Bottom): Youtube original thumbnail (displays on hover) */}
+                    {/* Layer 1 (Bottom): Youtube original thumbnail */}
                     <img
                       src={ytThumbnail}
                       alt={video.videoTitle}
@@ -107,7 +205,7 @@ export default function Gantele({ videos, onVideoClick }) {
                       loading="lazy"
                     />
 
-                    {/* Layer 2 (Top): Anime stylized thumbnail (fades out on hover) */}
+                    {/* Layer 2 (Top): Anime stylized thumbnail */}
                     <img
                       src={video.aniThumbnailUrl}
                       alt={video.videoTitle}
@@ -157,97 +255,15 @@ export default function Gantele({ videos, onVideoClick }) {
           </h3>
 
           <div className="flex flex-col gap-4 max-h-[600px] overflow-y-auto pr-1">
-            {filteredVideos.slice(0, 10).map(video => {
-              const [inputText, setInputText] = useState('')
-              const [inputRating, setInputRating] = useState(5)
-              
-              const customReview = localReviews[video.id] || {
-                rating: video.rating,
-                review: video.review
-              }
-              const displayRating = customReview.rating
-              const displayReview = customReview.review
-
-              return (
-                <div
-                  key={video.id}
-                  className="bg-[#181a2e] border border-violet-950/40 rounded-xl p-4 flex flex-col gap-3 transition-all hover:border-violet-600/30"
-                >
-                  {/* Video Reference */}
-                  <div
-                    onClick={() => onVideoClick(video)}
-                    className="flex gap-3 cursor-pointer group"
-                  >
-                    <div className="w-14 aspect-video rounded-lg overflow-hidden flex-shrink-0 bg-black">
-                      <img src={video.aniThumbnailUrl} alt="" className="w-full h-full object-cover" />
-                    </div>
-                    <div className="flex flex-col">
-                      <span className="text-[11px] font-bold text-white line-clamp-1 group-hover:text-violet-400 transition-colors">
-                        {video.videoTitle}
-                      </span>
-                      <span className="text-[9px] text-slate-500">{video.playlist}</span>
-                    </div>
-                  </div>
-
-                  {/* Active Review View */}
-                  <div className="bg-[#101121] rounded-lg p-2.5 flex flex-col gap-1 text-xs">
-                    <div className="flex justify-between items-center">
-                      <div className="flex text-yellow-400 gap-0.5">
-                        {Array.from({ length: 5 }).map((_, idx) => (
-                          <Star
-                            key={idx}
-                            size={11}
-                            fill={idx < displayRating ? "currentColor" : "none"}
-                            className="text-yellow-400"
-                          />
-                        ))}
-                      </div>
-                      <span className="text-[10px] text-slate-500">평점: {displayRating > 0 ? `${displayRating.toFixed(1)} / 5` : '리뷰 없음'}</span>
-                    </div>
-                    <p className={`mt-1 text-[11px] leading-relaxed italic ${displayRating > 0 ? 'text-zinc-200' : 'text-slate-600'}`}>
-                      "{displayReview}"
-                    </p>
-                  </div>
-
-                  {/* Rating / Write Review form */}
-                  <div className="flex flex-col gap-2 pt-2 border-t border-slate-900">
-                    <div className="flex justify-between items-center">
-                      <span className="text-[10px] text-slate-400">내 평가 입력:</span>
-                      <div className="flex gap-0.5">
-                        {[1, 2, 3, 4, 5].map((star) => (
-                          <button
-                            key={star}
-                            onClick={() => setInputRating(star)}
-                            className="text-yellow-400 focus:outline-none cursor-pointer"
-                          >
-                            <Star size={12} fill={star <= inputRating ? "currentColor" : "none"} />
-                          </button>
-                        ))}
-                      </div>
-                    </div>
-                    
-                    <div className="flex bg-[#101121] rounded-lg overflow-hidden border border-slate-900 focus-within:border-violet-600">
-                      <input
-                        type="text"
-                        placeholder="재치있는 드립 평 작성..."
-                        value={inputText}
-                        onChange={(e) => setInputText(e.target.value)}
-                        className="flex-1 px-3 py-1.5 bg-transparent border-none text-[11px] text-white focus:outline-none placeholder-slate-600"
-                      />
-                      <button
-                        onClick={() => {
-                          handleAddReview(video.id, inputRating, inputText)
-                          setInputText('')
-                        }}
-                        className="px-3 bg-violet-600 hover:bg-violet-500 text-white font-bold text-[10px] flex items-center justify-center cursor-pointer transition-colors"
-                      >
-                        등록
-                      </button>
-                    </div>
-                  </div>
-                </div>
-              )
-            })}
+            {filteredVideos.slice(0, 10).map(video => (
+              <GanteleReviewCard
+                key={video.id}
+                video={video}
+                onVideoClick={onVideoClick}
+                localReviews={localReviews}
+                onAddReview={handleAddReview}
+              />
+            ))}
           </div>
         </div>
       </div>
@@ -255,7 +271,7 @@ export default function Gantele({ videos, onVideoClick }) {
   )
 }
 
-// Play icon fallback
+// Play icon SVG
 const Play = ({ fill = "none", size = 16, className = "" }) => (
   <svg viewBox="0 0 24 24" width={size} height={size} stroke="currentColor" strokeWidth="2" fill={fill} strokeLinecap="round" strokeLinejoin="round" className={className}>
     <polygon points="6 3 20 12 6 21 6 3" />
