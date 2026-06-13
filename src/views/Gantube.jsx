@@ -19,7 +19,7 @@ export default function Gantube({ videos, onVideoClick }) {
   })
 
   // Channel Profile Avatar
-  const channelAvatar = "https://yt3.googleusercontent.com/ytc/AIdro_k3p_1i2y5Gv6-Hj8C7Yy6l6A6t=s160-c-k-c0x00ffffff-no-rj" // fallback to Poggant avatar if possible, or a nice styled placeholder. Let's use a nice initial/avatar.
+  const channelAvatar = "https://yt3.googleusercontent.com/klyjzplPDuBPXX3KOc6EH5BeUVJL98KRYOUmogit9vCeBW0L_jbBrQWsucdheBsY-NJdR5XM=s176-c-k-c0x00ffffff-no-rj"
 
   return (
     <div className="bg-[#0f0f0f] text-zinc-100 min-h-screen flex select-none">

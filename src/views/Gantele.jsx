@@ -197,19 +197,10 @@ export default function Gantele({ videos, onVideoClick }) {
                   {/* Poster Thumbnail (Anime Cross-fade hover styling!) */}
                   <div className="relative aspect-[3/4] w-full rounded-xl overflow-hidden bg-[#181a2e] border border-violet-950/20 shadow-md">
                     
-                    {/* Layer 1 (Bottom): Youtube original thumbnail */}
                     <img
                       src={ytThumbnail}
                       alt={video.videoTitle}
-                      className="absolute inset-0 w-full h-full object-cover"
-                      loading="lazy"
-                    />
-
-                    {/* Layer 2 (Top): Anime stylized thumbnail */}
-                    <img
-                      src={video.aniThumbnailUrl}
-                      alt={video.videoTitle}
-                      className="absolute inset-0 w-full h-full object-cover transition-opacity duration-500 ease-in-out group-hover:opacity-0"
+                      className="absolute inset-0 w-full h-full object-cover group-hover:scale-102 transition-transform duration-300"
                       loading="lazy"
                     />
 

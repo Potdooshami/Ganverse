@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import Papa from 'papaparse'
 import { Clapperboard, Play, HelpCircle } from 'lucide-react'
+import realUploadDates from './data/real_upload_dates.json'
 
 // Views import
 import Ganflix from './views/Ganflix'
@@ -44,7 +45,7 @@ function App() {
   useEffect(() => {
     const fetchData = async () => {
       setLoading(true)
-      const sheetUrl = import.meta.env.VITE_GOOGLE_SHEETS_URL
+      const sheetUrl = import.meta.env.VITE_GOOGLE_SHEETS_URL || 'https://docs.google.com/spreadsheets/d/1ESxjl0VfBWbKwzUvCpt4vIPS4DvxJGeefsN8HCmAC3g/export?format=csv'
       const localFallbackUrl = '/mock_data.csv'
 
       // We will try fetching from Google Sheets first, if fails we fallback to local CSV
@@ -80,7 +81,7 @@ function App() {
               aniThumbnailUrl: item.aniThumbnailUrl || `https://img.youtube.com/vi/${videoId}/hqdefault.jpg`,
               category: item.category || '미분류',
               tags: item.tags ? item.tags.split('#').filter(Boolean) : [],
-              uploadDate: item.uploadDate || '2024-01-01',
+              uploadDate: realUploadDates[videoId] || item.uploadDate || '2024-01-01',
               isHero: String(item.isHero).toUpperCase() === 'TRUE',
               rating: parseFloat(item.rating) || 0,
               review: item.review || '미작성',
